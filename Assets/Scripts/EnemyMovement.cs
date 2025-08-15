@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class EnemyMovement : MonoBehaviour
@@ -25,30 +26,48 @@ public class EnemyMovement : MonoBehaviour
 
     void Update()
     {
-        float distanceToPlayer = Vector3.Distance(enemy.transform.position, player.position);
-
-        // Switch states based on player distance
-        if (distanceToPlayer <= attackRange)
-            currentState = EnemyState.Attack;
-        else if (distanceToPlayer <= detectionRange)
-            currentState = EnemyState.Chase;
-        else
-            currentState = EnemyState.Patrol;
-
-        // Perform actions based on state
-        switch (currentState)
+        if (enemy != null)
         {
-            case EnemyState.Patrol:
-                Patrol();
-                break;
-            case EnemyState.Chase:
-                ChasePlayer();
-                break;
-            case EnemyState.Attack:
-                AttackPlayer();
-                break;
+            Enemy enemyPlayer = enemy.GetComponent<Enemy>();
+
+            if (enemyPlayer.health <= 0)
+            {
+                animator.Play("Walking To Dying"); // Mixamo death animation name
+                Destroy(enemy, 3f); // Destroy enemy after 3 seconds
+                return; // Exit if enemy is dead
+            }
+
+
+            float distanceToPlayer = Vector3.Distance(enemy.transform.position, player.position);
+
+            // Switch states based on player distance
+            if (distanceToPlayer <= attackRange)
+                currentState = EnemyState.Attack;
+            else if (distanceToPlayer <= detectionRange)
+                currentState = EnemyState.Chase;
+            else
+                currentState = EnemyState.Patrol;
+
+            // Perform actions based on state
+            switch (currentState)
+            {
+                case EnemyState.Patrol:
+                    Patrol();
+                    break;
+                case EnemyState.Chase:
+                    ChasePlayer();
+                    break;
+                case EnemyState.Attack:
+                    AttackPlayer();
+                    break;
+            }
+        }
+        else
+        {
+            return; // Exit if enemy is null
         }
     }
+        
 
     void Patrol()
     {
@@ -81,8 +100,11 @@ public class EnemyMovement : MonoBehaviour
     void FaceTarget(Vector3 targetPos)
     {
         Vector3 direction = (targetPos - enemy.transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(direction);
-        enemy.transform.rotation = Quaternion.Slerp(enemy.transform.rotation, lookRotation, Time.deltaTime * 7f);
+        if (direction != Vector3.zero)
+        {
+            Quaternion lookRotation = Quaternion.LookRotation(direction);
+            enemy.transform.rotation = Quaternion.Slerp(enemy.transform.rotation, lookRotation, Time.deltaTime * 5f);
+        }
     }
 
 
